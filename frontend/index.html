@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ask Your Documents Anything</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link href="https://db.onlinewebfonts.com/c/8cb707a9b8a73f8a7403336b861c3074?family=BubbledotICG-FinePos" rel="stylesheet" />
+<link
+  rel="stylesheet"
+  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+/>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ============ HERO VIEWPORT (same design system as the source landing page) ============ -->
+<div class="hero-viewport">
+
+  <div class="bg">
+    <video class="bg-video" autoplay muted loop playsinline>
+      <source
+        src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260809_012548_ef22562c-c0ae-4816-ad9d-f8922af4e6a7.mp4"
+        type="video/mp4"
+      />
+    </video>
+  </div>
+
+  <div class="page">
+
+    <!-- Header -->
+    <header class="header anim" style="--d:0s">
+      <div class="logo" title="PDF Assistant">
+        <img src="assets/logo.svg" width="52" height="52" alt="" />
+      </div>
+
+      <nav class="nav-pill" aria-label="Primary">
+        <a href="#top" class="nav-link active">Home</a>
+        <a href="#upload" class="nav-link">Upload</a>
+        <a href="#chat" class="nav-link">Chat</a>
+        <a href="#about" class="nav-link">About</a>
+      </nav>
+
+      <a class="signin-pill" href="http://localhost:8000/docs" target="_blank" rel="noopener">API Docs</a>
+
+      <button class="burger" id="burgerBtn" aria-expanded="false" aria-controls="mobileMenu" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </header>
+
+    <!-- Mobile menu -->
+    <div class="overlay" id="menuOverlay" hidden></div>
+    <div class="mobile-sheet" id="mobileMenu" hidden>
+      <a href="#top" class="sheet-link active">Home</a>
+      <a href="#upload" class="sheet-link">Upload</a>
+      <a href="#chat" class="sheet-link">Chat</a>
+      <a href="#about" class="sheet-link">About</a>
+      <a class="sheet-signin" href="http://localhost:8000/docs" target="_blank" rel="noopener">API Docs</a>
+    </div>
+
+    <!-- Hero -->
+    <main class="hero">
+      <div class="trust anim" style="--d:0.05s">
+        <span class="avatar"><i class="fa-solid fa-file-pdf"></i></span>
+        <span class="avatar"><i class="fa-solid fa-robot"></i></span>
+        <span class="avatar"><i class="fa-solid fa-bolt"></i></span>
+        <span class="trust-pill">Built with LangChain + OpenAI</span>
+      </div>
+
+      <h1 class="headline">
+        <span class="anim" style="--d:0.12s">Your PDFs</span>
+        <span class="anim" style="--d:0.3s">Now Answer Back</span>
+      </h1>
+
+      <p class="subhead anim" style="--d:0.28s">
+        Upload any PDF and ask it questions in plain language. Retrieval-augmented
+        generation finds the exact passages that matter and answers from them.
+      </p>
+
+      <a href="#upload" class="cta anim revealPulse" style="--d:0.4s">Upload a PDF</a>
+    </main>
+
+    <!-- Stats footer -->
+    <section class="stats" aria-label="Live index stats">
+      <div class="stat anim" style="--d:0.5s">
+        <div class="stat-icon">&lt;</div>
+        <div class="stat-value" data-target="120" data-suffix="ms" data-decimals="0">0ms</div>
+        <div class="stat-label">Avg Retrieval Time</div>
+      </div>
+      <div class="stat anim" style="--d:0.58s">
+        <div class="stat-icon">#</div>
+        <div class="stat-value" id="statDocuments" data-target="0" data-suffix="" data-decimals="0">0</div>
+        <div class="stat-label">Documents Indexed</div>
+      </div>
+      <div class="stat anim" style="--d:0.66s">
+        <div class="stat-icon">*</div>
+        <div class="stat-value" id="statChunks" data-target="0" data-suffix="" data-decimals="0">0</div>
+        <div class="stat-label">Chunks Stored</div>
+      </div>
+      <div class="stat anim" style="--d:0.74s">
+        <div class="stat-icon">%</div>
+        <div class="stat-value" id="statPages" data-target="0" data-suffix="" data-decimals="0">0</div>
+        <div class="stat-label">Pages Processed</div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<!-- ============ APP SECTION (normal scroll, same dark design language) ============ -->
+<section class="app-section" id="upload">
+  <div class="app-inner">
+
+    <div class="panel" id="uploadPanel">
+      <h2 class="panel-title">Upload a document</h2>
+      <p class="panel-sub">Drop a PDF here, or choose a file. It gets split into chunks, embedded, and stored so you can ask questions about it.</p>
+
+      <div class="dropzone" id="dropzone" tabindex="0">
+        <i class="fa-solid fa-file-arrow-up"></i>
+        <p><strong>Drag & drop a PDF</strong> or click to browse</p>
+        <input type="file" id="fileInput" accept="application/pdf" hidden />
+      </div>
+      <p class="upload-status" id="uploadStatus"></p>
+
+      <h3 class="list-title">Indexed documents</h3>
+      <ul class="doc-list" id="docList">
+        <li class="doc-empty">No documents uploaded yet.</li>
+      </ul>
+    </div>
+
+    <div class="panel" id="chat">
+      <h2 class="panel-title">Ask a question</h2>
+      <p class="panel-sub">Answers are generated only from what's in your uploaded PDFs.</p>
+
+      <div class="chat-window" id="chatWindow">
+        <div class="msg msg-bot">Upload a PDF, then ask me anything about it.</div>
+      </div>
+
+      <form class="chat-form" id="chatForm">
+        <input type="text" id="chatInput" placeholder="Ask a question about your documents…" autocomplete="off" />
+        <button type="submit" class="chat-send">Ask</button>
+      </form>
+    </div>
+
+  </div>
+
+  <p class="footnote" id="about">
+    Frontend: static HTML/CSS/JS. Backend: FastAPI + LangChain + Chroma + OpenAI.
+    Configure the API key in <code>backend/.env</code> — see the README.
+  </p>
+</section>
+
+<script src="main.js"></script>
+</body>
+</html>
