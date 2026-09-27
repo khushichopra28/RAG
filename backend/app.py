@@ -15,10 +15,11 @@ from config import settings
 
 app = FastAPI(title="PDF RAG Assistant")
 
+# Credentialed CORS requires CORS_ORIGINS in .env to list explicit origins, not "*".
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -32,9 +33,15 @@ class QueryRequest(BaseModel):
     k: int | None = None
 
 
+@app.on_event("startup")
+def on_startup():
+    settings.validate_startup()
+
+
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "configured": bool(settings.groq_api_key)}
+    is_valid = bool(settings.groq_api_key and settings.groq_api_key.startswith("gsk_"))
+    return {"status": "ok", "configured": is_valid, "model": settings.llm_model}
 
 
 @app.get("/api/stats")
@@ -52,10 +59,10 @@ async def upload(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(400, "Only PDF files are supported.")
 
-    if not settings.groq_api_key:
+    if not settings.groq_api_key or not settings.groq_api_key.startswith("gsk_"):
         raise HTTPException(
             500,
-            "GROQ_API_KEY is not set on the server. Add it to backend/.env.",
+            "GROQ_API_KEY is not set or malformed on the server. Add a valid 'gsk_' key to backend/.env.",
         )
 
     temp_path = UPLOAD_DIR / f"{uuid.uuid4()}_{file.filename}"
@@ -74,12 +81,19 @@ async def upload(file: UploadFile = File(...)):
 def query(payload: QueryRequest):
     if not payload.question.strip():
         raise HTTPException(400, "Question cannot be empty.")
-    if not settings.groq_api_key:
+    if not settings.groq_api_key or not settings.groq_api_key.startswith("gsk_"):
         raise HTTPException(
             500,
-            "GROQ_API_KEY is not set on the server. Add it to backend/.env.",
+            "GROQ_API_KEY is not set or malformed on the server. Add a valid 'gsk_' key to backend/.env.",
         )
-    return rag_pipeline.answer_question(payload.question, payload.k)
+    try:
+        return rag_pipeline.answer_question(payload.question, payload.k)
+    except Exception as exc:
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(500, f"{type(exc).__name__}: {exc}") from exc
+
 
 
 @app.delete("/api/documents/{doc_id}")

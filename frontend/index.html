@@ -149,10 +149,19 @@
 
   </div>
 
-  <p class="footnote" id="about">
-    Frontend: static HTML/CSS/JS. Backend: FastAPI + LangChain + Chroma + OpenAI.
-    Configure the API key in <code>backend/.env</code> — see the README.
-  </p>
+  <section class="panel about-panel" id="about" aria-labelledby="aboutTitle">
+    <h2 class="panel-title" id="aboutTitle">About this project</h2>
+    <p class="panel-sub">
+      This PDF question-answering tool pairs a static HTML, CSS, and JavaScript frontend
+      with a FastAPI backend built with LangChain and Chroma.
+    </p>
+    <p class="panel-sub">
+      Uploaded PDFs are split into chunks, embedded locally with sentence-transformers,
+      and stored in Chroma. When you ask a question, relevant passages are retrieved
+      
+    </p>
+    
+  </section>
 </section>
 
 <script src="main.js"></script>

@@ -19,6 +19,8 @@ import uuid
 from pathlib import Path
 from typing import TypedDict
 
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -34,6 +36,7 @@ REGISTRY_PATH = DATA_DIR / "documents.json"
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 CHROMA_DIR.mkdir(parents=True, exist_ok=True)
+
 
 
 class DocumentRecord(TypedDict):
@@ -104,6 +107,9 @@ def ingest_pdf(file_path: str, original_filename: str) -> DocumentRecord:
     for chunk in chunks:
         chunk.metadata["doc_id"] = doc_id
         chunk.metadata["source"] = original_filename
+        # PyPDFLoader produces 0-indexed page numbers; normalize to 1-indexed for human citation
+        raw_p = chunk.metadata.get("page", 0)
+        chunk.metadata["page"] = (raw_p + 1) if isinstance(raw_p, int) else 1
 
     vectorstore = get_vectorstore()
     vectorstore.add_documents(chunks)
@@ -155,6 +161,13 @@ ANSWER_PROMPT = ChatPromptTemplate.from_messages(
 )
 
 
+def _extract_page(doc) -> int:
+    p = doc.metadata.get("page")
+    if isinstance(p, int):
+        return p if p > 0 else 1
+    return 1
+
+
 def answer_question(question: str, k: int | None = None) -> dict:
     vectorstore = get_vectorstore()
     retriever = vectorstore.as_retriever(search_kwargs={"k": k or settings.retriever_k})
@@ -167,7 +180,7 @@ def answer_question(question: str, k: int | None = None) -> dict:
         }
 
     context = "\n\n---\n\n".join(
-        f"[{d.metadata.get('source', 'unknown')}, page {d.metadata.get('page', '?')}]\n{d.page_content}"
+        f"[{d.metadata.get('source', 'unknown')}, page {_extract_page(d)}]\n{d.page_content}"
         for d in docs
     )
 
@@ -176,12 +189,13 @@ def answer_question(question: str, k: int | None = None) -> dict:
     response = chain.invoke({"context": context, "question": question})
 
     sources = sorted(
-        {(d.metadata.get("source", "unknown"), d.metadata.get("page", 0)) for d in docs}
+        {(str(d.metadata.get("source", "unknown")), _extract_page(d)) for d in docs}
     )
     return {
         "answer": response.content,
         "sources": [{"filename": s[0], "page": s[1]} for s in sources],
     }
+
 
 
 def get_stats() -> dict:

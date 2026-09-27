@@ -293,11 +293,9 @@ body{
 }
 .chat-send:disabled{opacity:.5;cursor:not-allowed;}
 
-.footnote{
-  text-align:center;color:var(--muted);font-size:.8rem;max-width:640px;
-  margin:40px auto 0;line-height:1.6;
-}
-.footnote code{background:#1a1a1d;padding:2px 6px;border-radius:6px;}
+.about-panel{max-width:1040px;margin:24px auto 0;}
+.about-panel .panel-sub:last-child{margin-bottom:0;}
+.about-panel code{background:#1a1a1d;padding:2px 6px;border-radius:6px;}
 
 /* ---------- mobile (<=720px) ---------- */
 @media (max-width:720px){
